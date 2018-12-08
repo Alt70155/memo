@@ -4,7 +4,7 @@
 ```JavaScript
 document.body.style.fontWeight = "bold";
 ```
-<br>
+
 ### ・selectの要素を選択する
 ```HTML
 <select class="" name="">
