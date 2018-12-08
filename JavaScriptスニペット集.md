@@ -13,7 +13,9 @@ document.body.style.fontWeight = "bold";
   <option value="c">c</option>
 </select>
 ```
+
 上の要素に対してaを選択する
+
 ```JavaScript
 document.querySelectorAll('select').forEach(elem => {
   elem.children[0].selected = true;
