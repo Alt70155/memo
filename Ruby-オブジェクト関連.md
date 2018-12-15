@@ -69,3 +69,94 @@ Foo.bar #=> クラスメソッド内のself: Foo
 foo = Foo.new
 foo.baz #=> インスタンスメソッド内のself
 ```
+
+### モジュールについて
+ログを出力する処理が重複しているクラスが下にある。 <br>
+これを、重複したコードをまとめようと安易に継承を使ったりしてはいけない。
+「製品はユーザである」または「ユーザは製品である」という関係(is-aの関係)が成り立たないのであれば、継承の使用は避けるべきである。<br>
+
+```Ruby
+class Product
+  def title
+    log 'title is called.'
+        'A great movie'
+  end
+
+  private
+
+  def log(text)
+    puts "[LOG] #{text}"
+  end
+end
+
+class User
+  def name
+    log 'name is called'
+        'Aice'
+  end
+
+  private
+
+  def log(text)
+    puts "[LOG] #{text}"
+  end
+end
+```
+
+継承は使えないが、「ログを出力する」という共通の機能は持たせたいという時にモジュールを使う。
+
+```Ruby
+module Loggable
+  private
+  def log(text)
+    puts "[LOG] #{text}"
+  end
+end
+
+class Product
+  include Loggable
+
+  def title
+    log 'title is called.'
+        'A great movie'
+  end
+end
+
+class User
+  include Loggable
+
+  def name
+    log 'name is called'
+        'Aice'
+  end
+end
+
+p Product.new.title
+p User.new.name
+```
+
+#### モジュールをextendする
+モジュールをクラスにミックスインするもうひとつの方法としてextendがある。
+extendを使うと、モジュール内のメソッドをそのクラスの特異メソッド(つまりクラスメソッド)にすることができる。
+
+```Ruby
+module Loggable
+  def log(text)
+    puts "[LOG] #{text}"
+  end
+end
+
+class Product
+  extend Loggable
+
+  def self.create_products(names)
+    #logメソッドをクラスメソッド内で呼び出す
+    #(つまりlogメソッド自体もクラスメソッドになっている)
+    log 'create_products is called.'
+  end
+end
+
+Product.create_products([])
+Product.log('hello')
+# p Product.new.create_products([]) エラー
+```
