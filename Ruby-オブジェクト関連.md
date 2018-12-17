@@ -160,3 +160,34 @@ Product.create_products([])
 Product.log('hello')
 # p Product.new.create_products([]) エラー
 ```
+
+#### module_functionメソッド
+ミックスインとしても、モジュールの特異メソッドとしても使えるようにする設定
+
+```Ruby
+module Loggable
+  def log(text)
+    puts "[LOG] #{text}"
+  end
+
+  module_function :log
+end
+
+#モジュールの特異メソッドとしての呼び出し
+Loggable.log('hello')
+
+class Product
+  include Loggable
+
+  def title
+    #includeしたLoggableモジュールのlogメソッドを呼び出す
+    log 'title is called'
+        'A great movie'
+  end
+end
+
+#ミックスインとしてlogメソッドを呼び出す
+pro = Product.new
+pro.title
+```
+このように、両方でも使えるように設定したlogメソッドのようなことをモジュール関数と呼ぶ
