@@ -256,3 +256,105 @@ syn.add_effect(Effects.reverse) #Effects.reverseはProcオブジェクト
 #単体で呼び出す場合は、Effects.reverseはProcなので引数をつけてcallする
 p Effects.reverse.call('Ruby is fun!')
 ```
+
+#### Procオブジェクトの様々な呼び出し
+```Ruby
+add = Proc.new { |a, b| puts a + b }
+add.call(10, 20)
+add.yield(10, 20)
+add.(10, 20)
+add[10, 20]
+add === [10, 20]
+```
+
+#### &とto_procメソッド
+map(&:upcase)の説明
+①&:upcaseはシンボルの:upcaseに対してto_procを呼び出す
+```Ruby
+:upcase.to_proc
+```
+②シンボルの:upcaseがProcオブジェクトに変換され、mapメソッドにブロックとして渡される
+③上記②で作ったProcオブジェクトはmapメソッドから配列の各要素を実行時の第一引数として受け取る。
+④mapメソッドはProcオブジェクトの戻り値を順に新しい配列に詰め込む。
+⑤上記③と④のコンビネーションにより、配列の各要素が大文字に変換された新しい配列がmapメソッドの戻り値になる。
+
+### ERb
+<%=  %> これは実行・評価された結果を**表示**する
+<%  %>　これは実行・評価のみ、表示はされない
+
+```html
+<% provide(:title, "Home") %>
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title><%= yield(:title) %> | Ruby on Rails Tutorial Sample App</title>
+  </head>
+  <body>
+    <h1>Sample App by <%= yield(:title) %></h1>
+    <!--計算した結果を返して表示-->
+    <h2>100 * 20 = <%= s = 100 * 20 %></h2>
+    <!--配列を作成して代入-->
+    <% array = ["hello", "world", "Alt"].map {|x| x.upcase } %>
+
+    <!--eachで配列の要素を表示する-->
+    <% array.each do |x| %>
+      <%= x.upcase %>
+    <% end %><br>
+
+    <!--if文で評価して表示-->
+    <% str = "erb" %>
+    <% if str == "erb" %>
+      <h2><%= str %></h2>
+    <% else %>
+      <%= "not" %>
+    <% end %>
+
+    <h3><%= str if str == "erb" %></h3>
+
+    <h4><%= str == "erb" ? str : "no" %></h4>
+
+    <p>
+      Ruby is GOD. <br>
+      Ruby on Rails is SO COOL. <br>
+    </p>
+  </body>
+</html>
+
+```
+
+### コマンドラインからファイル名を一括変換
+```Ruby
+ruby -e "(2..7).each { |i|
+  File.rename(\"page\" + i.to_s + \".html\", \"page\" + i.to_s + \".html.erb\")
+}"
+```
+
+### Forwardableモジュール
+Forwardableモジュールは、クラスに対してメソッドの移譲機能を追加する
+def_delegatorsで必要なメソッドを指定
+
+```Ruby
+require 'forwardable'
+
+class Stack
+  extend Forwardable
+
+  def initialize
+    @ary = []
+  end
+
+  def_delegators :@ary, :push, :pop, :clear, :size
+end
+
+stack = Stack.new
+stack.push 1, 2, 3
+p stack.pop #3
+p stack.size #2
+p stack.length #指定してないためNoMethodError
+
+```
+参考：http://shindolog.hatenablog.com/entry/2014/10/11/213434
+
+移譲を利用する目的は「他のオブジェクトに処理を任せること」。
+「このクラスではこんな処理を担当するべき」「あのクラスではこんな処理を担当するべき」といった感じに、オブジェクトの責務を考えて設計したいときに委譲を使うと良いらしい

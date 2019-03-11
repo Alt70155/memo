@@ -191,3 +191,186 @@ pro = Product.new
 pro.title
 ```
 このように、両方でも使えるように設定したlogメソッドのようなことをモジュール関数と呼ぶ
+
+### コンポジション
+
+```Ruby
+class Bicycle
+  attr_reader :size, :parts
+
+  def initialize(args={})
+    @size  = args[:size],
+    @parts = args[:parts]
+  end
+
+  def spares
+    parts.spares
+  end
+end
+
+require 'forwardable'
+class Parts
+  extend Forwardable
+  def_delegators :@parts, :size, :each
+  include Enumerable
+
+  def initialize(parts)
+    @parts = parts
+  end
+
+  def spares
+    # part.needs_spareがtrueのみ抽出
+    # self.select { |part| part.needs_spare }
+    select(&:needs_spare)
+  end
+end
+
+require 'ostruct'
+module PartsFactory
+  # buildというクラスメソッド
+  def self.build(config, parts_class = Parts)
+    parts_class.new(
+      config.map { |part_config| create_part(part_config) }
+    )
+  end
+
+  def self.create_part(part_config)
+    OpenStruct.new(
+      name:        part_config[0],
+      description: part_config[1],
+      needs_spare: part_config.fetch(2, true)
+    )
+  end
+end
+# PartsFactoryがやってること
+# Partsの引数にPartインスタンスを格納した配列を渡す
+# Parts.new([
+#   OpenStruct.new(name: 'chain', description: '10-speed'),
+#   OpenStruct.new(name: 'tire_size', description: '23'),
+#   OpenStruct.new(name: 'tape_color', description: 'red')
+# ])
+
+# chain =
+#   Part.new(name: 'chain', description: '10-speed')
+#
+# road_tire =
+#   Part.new(name: 'tire_size', description: '23')
+#
+# tape =
+#   Part.new(name: 'tape_color', description: 'red')
+#
+# mountain_tire =
+#   Part.new(name: 'tire_size', description: '2.1')
+#
+# rear_shock =
+#   Part.new(name: 'rear_shock', description: 'Fox')
+#
+# front_shock =
+#   Part.new(
+#     name: 'front_shock',
+#     description: 'Manitou',
+#     needs_spare: false
+#   )
+
+# road_bike_parts     = Parts.new([chain,
+#                                  road_tire,
+#                                  tape])
+# mountain_bike_parts = Parts.new([chain,
+#                                  mountain_tire,
+#                                  front_shock,
+#                                  rear_shock])
+
+#Partsの引数にPartインスタンスを格納した配列を渡す
+# road_bike_parts_matome = Parts.new([
+#   Part.new(name: 'chain', description: '10-speed'),
+#   Part.new(name: 'tire_size', description: '23'),
+#   Part.new(name: 'tape_color', description: 'red')
+# ])
+#
+# @road_bike =
+#   Bicycle.new(
+#     size: 'L',
+#     parts: road_bike_parts
+#   )
+#
+# @mountain_bike =
+#   Bicycle.new(
+#     size: 'L',
+#     parts: mountain_bike_parts
+#   )
+
+# 第三引数はスペアを必要とするかどうか・省略した場合は必要
+# これらは自転車の設計図
+road_config = [
+  ['chain',      '10-speed'],
+  ['tire_size',  '23'],
+  ['tape_color', 'red']
+]
+
+mountain_config = [
+  ['chain',       '10-speed'],
+  ['tire_size',   '2.1'],
+  ['front_shock', 'Manitou', false],
+  ['rear_shock',  'Fox']
+]
+
+recumbent_config = [
+  ['chain',     '9-speed'],
+  ['tire_size', '28'],
+  ['flag',      'tall and orange']
+]
+
+p road_parts = PartsFactory.build(road_config)
+p recumbent_parts = PartsFactory.build(recumbent_config)
+```
+
+### privateメソッドについて
+
+privateメソッドを呼び出すときは、レシーバは指定できない(self)
+
+```Ruby
+class Sample
+
+  def func1
+    private_func #通常呼び出し
+  end
+
+  def func2
+    self.private_func #あえてレシーバ(self)を明示して指定
+  end
+
+  private
+    def private_func
+      p "Hello"
+    end
+  #private
+end
+
+s1 = Sample.new
+s1.func1 #=> Hello
+s1.func2 #=> NoMethodError
+```
+
+他にも、自分(self)以外のオブジェクトのメソッドを呼び出すには、レシーバを指定する必要がある。(当たり前ではある)
+
+```Ruby
+
+class Sample2
+
+  def s2_func1
+    s1 = Sample.new
+    s1.func1 #通常呼び出し
+  end
+
+  def s2_func2
+    s1 = Sample.new
+    func1
+  end
+
+end
+
+s2 = Sample2.new
+s2.s2_func1
+s2.s2_func2
+
+```
