@@ -107,3 +107,32 @@ rand2 = rand(10);
 console.log(rand1);
 console.log(rand2);
 ```
+
+### フェードアウト
+container下のalertをフェードアウトさせる
+
+```JavaScript
+setTimeout(alertDelete, 2500)
+
+function alertDelete () {
+  const notice = document.querySelector('.alert')
+  let fadeOut
+  if (notice !== null) {
+    let opacityValue = 1
+
+    fadeOut = function fadeOutExp () {
+      opacityValue -= 0.04
+      notice.style.opacity = `${opacityValue}`
+      if (opacityValue <= 0) {
+        clearInterval(id)
+        // document.querySelector('.container').removeChild(notice)
+        // display: none;のほうが速度とかの面で良い？
+        document.querySelector('.alert').style.display = 'none'
+      }
+    }
+
+    const id = setInterval(fadeOut, 50)
+  }
+}
+
+```
